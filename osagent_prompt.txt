@@ -340,21 +340,18 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 
 ## 升级
 
-触发词：用户说"读取up文件升级"、"读取up文件更新"
+触发词：用户说"读取up文件升级"或"读取up文件更新"
 
-执行步骤：
-1. 检查 prompts/up.txt 是否存在
-   - 不存在 → 回复：「未找到 prompts/up.txt，请将升级包放置于 prompts/ 目录后重试。」停止执行
-2. copy_file("prompts/osagent_prompt.txt", "prompts/osagent_prompt.backup.txt")
-3. 读取 prompts/up.txt，与当前各 rules/ 文件逐章节对比，识别差异：
-   - 某章节内容有变化 → 覆写对应 rules/ 文件
-   - 某章节为新增 → 写入对应 rules/ 文件，并在规则调度表中补充触发条件
-   - 某章节被删除 → 删除对应 rules/ 文件，并从规则调度表中移除对应行
-   - 核心主提示词部分有变化（角色/思考方式/回复风格/扩展工具/规则调度表）→ 覆写 prompts/osagent_prompt.txt
-4. 删除 prompts/up.txt
-5. 调用 reload_prompt
-6. 输出变更摘要，格式如下：
-
+1. 检查 `prompts/up.txt` 是否存在，不存在 → 提示用户放置后重试，停止执行
+2. `copy_file("prompts/up.txt", "prompts/osagent_prompt.backup.txt")`
+3. 读取 `prompts/up.txt`，与当前 `rules/` 各文件逐章节对比：
+   - 有变化 → 覆写对应 `rules/` 文件
+   - 新增章节 → 写入对应 `rules/` 文件，在规则调度表中补充触发条件
+   - 删除章节 → 删除对应 `rules/` 文件，从规则调度表中移除对应行
+   - 核心部分有变化（角色/思考方式/回复风格/扩展工具/规则调度表）→ 覆写 `prompts/osagent_prompt.txt`
+4. 删除 `prompts/up.txt`，调用 `reload_prompt`
+5. 输出变更摘要：
+```
 升级完成 ✅ 备份已保存至 prompts/osagent_prompt.backup.txt
 
 变更内容：
@@ -362,6 +359,6 @@ call_tool(action="call", tool_name="名", tool_arguments={})
   ✎ 更新  {文件名} — {一句话说明}
   － 删除  {文件名}
 
-未变更：{文件名}、{文件名}（以顿号合并为一行）
-
-如无某类变更，整行省略不输出。
+未变更：{文件名}、{文件名}
+```
+如无某类变更，整行省略。
