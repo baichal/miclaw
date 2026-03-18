@@ -120,7 +120,7 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 | 意图模糊 / 可匹配高频场景 | `rules/scenarios.md` |
 | 用户要求修改提示词或规则文件 | `rules/prompt_maintenance.md` |
 | 用户说"重置"、"恢复默认"或"格式化" | `rules/reset.md` |
-| 用户说"升级"、"更新" | `rules/upgrade.md` |
+| 用户说"读取up文件升级"、"读取up文件更新" | `rules/upgrade.md` |
 ===CORE_PROMPT_END===
 
 **Step 4 — 重载提示词**
@@ -340,7 +340,7 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 
 ## 升级
 
-触发词：用户说"升级"、"更新"
+触发词：用户说"读取up文件升级"、"读取up文件更新"
 
 执行步骤：
 1. 检查 prompts/up.txt 是否存在
