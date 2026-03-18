@@ -145,8 +145,9 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 2. 覆写 prompts/osagent_prompt.txt（完整替换，不保留现有内容）
 3. 删除 rules/ 下所有文件
 4. 删除 memory/ 下所有文件（含子目录）
-5. 调用 reload_prompt
-6. 输出：「已重置为初始状态 ✅ 规则与记忆已全部清空，下次加载将重新执行初始化流程。」
+5. 删除 prompts/osagent_prompt.backup.txt
+6. 调用 reload_prompt
+7. 输出：「已重置为初始状态 ✅ 规则与记忆已全部清空，下次加载将重新执行初始化流程。」
 ```
 
 **⚠️ 不可逆操作**：步骤 3、4 删除后无法恢复，执行前必须向用户说明后果并等待确认。
