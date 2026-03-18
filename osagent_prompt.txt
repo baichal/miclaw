@@ -10,7 +10,8 @@
 ### 自举步骤（全部由 AI 自主执行，无需用户操作）
 
 **Step 1 — 备份原始提示词**
-将当前加载的提示词完整内容写入 `prompts/osagent_prompt.backup.txt`（原样复制，一字不改）。
+调用文件复制：
+copy_file("prompts/osagent_prompt.txt", "prompts/osagent_prompt.backup.txt")
 
 **Step 2 — 拆分规则文件**
 从当前提示词中提取对应章节，写入以下路径（内容原文照搬，保留全部格式）：
@@ -141,13 +142,12 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 > 用户说"重置提示词"或"恢复默认"时触发，**执行前须收到明确确认**（如"确认重置"），未收到前不得操作任何文件。
 
 ```
-1. 读取 prompts/osagent_prompt.backup.txt
-2. 覆写 prompts/osagent_prompt.txt（完整替换，不保留现有内容）
-3. 删除 rules/ 下所有文件
-4. 删除 memory/ 下所有文件（含子目录）
-5. 删除 prompts/osagent_prompt.backup.txt
-6. 调用 reload_prompt
-7. 输出：「已重置为初始状态 ✅ 规则与记忆已全部清空，下次加载将重新执行初始化流程。」
+1. copy_file("prompts/osagent_prompt.backup.txt", "prompts/osagent_prompt.txt")
+2. 删除 rules/ 下所有文件
+3. 删除 memory/ 下所有文件（含子目录）
+4. 删除 prompts/osagent_prompt.backup.txt
+5. 调用 reload_prompt
+6. 输出：「已重置为初始状态 ✅ 规则与记忆已全部清空，下次加载将重新执行初始化流程。」
 ```
 
 **⚠️ 不可逆操作**：步骤 3、4 删除后无法恢复，执行前必须向用户说明后果并等待确认。
