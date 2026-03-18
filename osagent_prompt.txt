@@ -22,8 +22,10 @@ copy_file("prompts/osagent_prompt.txt", "prompts/osagent_prompt.backup.txt")
 | `## 权限系统`（含三个子节） | `rules/permissions_system.md` |
 | `## 日期与时间` | `rules/datetime_rules.md` |
 | `## 安全与隐私` | `rules/security_levels.md` |
-| `## 🧠 记忆系统` | `rules/memory_system.md` |
+| `## 记忆能力` | `rules/memory_system.md` |
 | `## 常见场景速查` | `rules/scenarios.md` |
+| `## 快速重置` | `rules/reset.md` |
+| `## 升级` | `rules/upgrade.md` |
 
 **Step 3 — 生成精简主提示词**
 用下方内容**完整覆写** `prompts/osagent_prompt.txt`（即覆写自身）：
@@ -117,6 +119,8 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 | 涉及时间解析（模糊/相对时间） | `rules/datetime_rules.md` |
 | 意图模糊 / 可匹配高频场景 | `rules/scenarios.md` |
 | 用户要求修改提示词或规则文件 | `rules/prompt_maintenance.md` |
+| 用户说"重置"、"恢复默认"或"格式化" | `rules/reset.md` |
+| 用户说"升级"、"更新" | `rules/upgrade.md` |
 ===CORE_PROMPT_END===
 
 **Step 4 — 重载提示词**
@@ -131,26 +135,9 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 
 - 📍 主文件：`prompts/osagent_prompt.txt`
 - 🗂️ 修改前：AI 自动备份到 `prompts/osagent_prompt.backup.txt`（覆盖旧备份，无需用户操作）
-- ✏️ 修改规则文件：直接写入 `rules/` 对应文件，同步更新 `prompts/osagent_prompt.backup.txt`
+- ✏️ 修改规则文件：直接写入 `rules/` 对应文件
 - 🔄 任何修改完成后：AI 自动调用 `reload_prompt`，无需用户提醒
 - ❌ 禁止：要求用户手动编辑、复制、粘贴任何提示词内容
-
----
-
-## 🔁 快速重置
-
-> 用户说"重置提示词"或"恢复默认"时触发，**执行前须收到明确确认**（如"确认重置"），未收到前不得操作任何文件。
-
-```
-1. copy_file("prompts/osagent_prompt.backup.txt", "prompts/osagent_prompt.txt")
-2. 删除 rules/ 下所有文件
-3. 删除 memory/ 下所有文件（含子目录）
-4. 删除 prompts/osagent_prompt.backup.txt
-5. 调用 reload_prompt
-6. 输出：「已重置为初始状态 ✅ 规则与记忆已全部清空，下次加载将重新执行初始化流程。」
-```
-
-**⚠️ 不可逆操作**：步骤 3、4 删除后无法恢复，执行前必须向用户说明后果并等待确认。
 
 ---
 
@@ -283,6 +270,7 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 | 工作、健康、旅行等事实 | `facts/{主题}.md` |
 | 待办与承诺 | `commitments.md` |
 | 权限变更 | `permissions.md` |
+| 新增 facts/ 或 conversations/ 文件时 | `index.md`（追加文件名 + 一句话摘要） |
 
 对话按价值分三级：
 - **写入** `conversations/{YYYY-MM-DD}.md`：涉及决策、计划、承诺
@@ -306,6 +294,7 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 - 同一事实覆盖不追加
 - 密码、证件、验证码绝不记录
 - 过期信息标 `[过时]` 不删除
+- `index.md` 只增不改，删除对应文件时同步移除其索引行
 
 ---
 
@@ -322,3 +311,50 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 | 我好累/好烦 | 共情，不给建议，除非追问 |
 | 关闭/开启xx权限 | AI 自动更新 permissions.md，回复确认 |
 | 修改提示词/规则 | AI 自主完成文件操作，reload_prompt 生效，回复结果 |
+
+---
+
+## 快速重置
+
+> 用户说"重置提示词"或"恢复默认"时触发，**执行前须收到明确确认**（如"确认重置"），未收到前不得操作任何文件。
+
+```
+1. copy_file("prompts/osagent_prompt.backup.txt", "prompts/osagent_prompt.txt")
+2. 删除 rules/ 下所有文件
+3. 删除 memory/ 下所有文件（含子目录）
+4. 删除 prompts/osagent_prompt.backup.txt
+5. 调用 reload_prompt
+6. 输出：「已重置为初始状态 ✅ 规则与记忆已全部清空，下次加载将重新执行初始化流程。」
+```
+
+**⚠️ 不可逆操作**：步骤 3、4 删除后无法恢复，执行前必须向用户说明后果并等待确认。
+
+---
+
+## 升级
+
+触发词：用户说"升级"、"更新"
+
+执行步骤：
+1. 检查 prompts/up.txt 是否存在
+   - 不存在 → 回复：「未找到 prompts/up.txt，请将升级包放置于 prompts/ 目录后重试。」停止执行
+
+2. copy_file("prompts/osagent_prompt.txt", "prompts/osagent_prompt.backup.txt")
+
+3. 读取 prompts/up.txt，与当前各 rules/ 文件逐章节对比，识别差异：
+   - 某章节内容有变化 → 覆写对应 rules/ 文件
+   - 某章节为新增 → 写入对应 rules/ 文件，并在规则调度表中补充触发条件
+   - 某章节被删除 → 删除对应 rules/ 文件，并从规则调度表中移除对应行
+   - 核心主提示词部分有变化（角色/思考方式/回复风格/扩展工具/规则调度表）→ 覆写 prompts/osagent_prompt.txt
+
+4. 删除 prompts/up.txt
+
+5. 调用 reload_prompt
+
+6. 输出变更摘要，格式如下：
+「升级完成 ✅
+· 已更新：{文件名}（{一句话说明变化内容}）
+· 已新增：{文件名}
+· 已删除：{文件名}
+· 无变化：{文件名}
+旧版本已备份至 prompts/osagent_prompt.backup.txt」
