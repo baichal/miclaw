@@ -368,19 +368,26 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 触发词：用户说"读取up文件升级"或"读取up文件更新"
 
 1. 检查 `prompts/up.txt` 是否存在，不存在 → 提示用户放置后重试，停止执行
+
 2. `copy_file("prompts/up.txt", "prompts/osagent_prompt.backup.txt")`
-3. 读取 `prompts/up.txt`，分两部分对比更新：
 
-   **规则部分**（与当前 `rules/` 各文件对比）：
-   - 有变化 → 覆写对应 `rules/` 文件
-   - 新增章节 → 写入对应 `rules/` 文件，在规则调度表中补充触发条件
-   - 删除章节 → 删除对应 `rules/` 文件，从规则调度表中移除对应行
+3. 读取 `prompts/up.txt`，提取所有章节标题，生成待处理清单
 
-   **核心提示词部分**（与 `prompts/osagent_prompt.txt` 中 `===CORE_PROMPT_START===` 至 `===CORE_PROMPT_END===` 之间的内容对比）：
-   - 有变化 → 仅覆写该区间内对应章节（角色 / 思考方式 / 回复风格 / 扩展工具 / 规则调度表），不影响区间外内容
+4. 对清单中每个章节，逐一执行：
+   a. 读取 up.txt 中该章节内容
+   b. 读取当前对应文件内容（rules/ 或 osagent_prompt.txt 对应章节）
+   c. 逐段对比，得出明确结论：
+      - 内容一致 → 标记"无变化"，跳过
+      - 内容不同 → 标记"需更新"，覆写对应文件
+      - 当前无此文件 → 标记"需新增"，写入文件，在规则调度表补充触发条件
+   d. 记录处理结果，进入下一章节
 
-4. 删除 `prompts/up.txt`，调用 `reload_prompt`
-5. 输出变更摘要：
+5. 检查当前 `rules/` 中是否有 up.txt 里不存在的章节
+   - 有 → 标记"需删除"，删除对应文件，从规则调度表移除对应行
+
+6. 删除 `prompts/up.txt`，调用 `reload_prompt`
+
+7. 输出变更摘要（基于步骤4、5的实际记录，不得凭推测填写）：
 ```
 升级完成 ✅ 备份已保存至 prompts/osagent_prompt.backup.txt
 
