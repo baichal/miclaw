@@ -23,9 +23,30 @@ copy_file("prompts/osagent_prompt.txt", "prompts/osagent_prompt.backup.txt")
 | `## 日期与时间` | `rules/datetime_rules.md` |
 | `## 安全与隐私` | `rules/security_levels.md` |
 | `## 记忆能力` | `rules/memory_system.md` |
+| `## 记忆维护` | `rules/memory_maintenance.md` |
 | `## 常见场景速查` | `rules/scenarios.md` |
 | `## 快速重置` | `rules/reset.md` |
 | `## 升级` | `rules/upgrade.md` |
+
+**Step 2.5 — 生成版本号注册表**
+提取所有已拆分文件及主提示词的版本号，写入 `rules/versions.md`：
+```
+# 版本号注册表
+<!-- 由自举/升级流程自动维护，勿手动编辑 -->
+
+| 文件 | 版本 |
+|------|------|
+| `prompts/osagent_prompt.txt` | 1.0 |
+| `rules/prompt_maintenance.md` | 1.0 |
+| `rules/permissions_system.md` | 1.0 |
+| `rules/datetime_rules.md` | 1.0 |
+| `rules/security_levels.md` | 1.0 |
+| `rules/memory_system.md` | 1.0 |
+| `rules/memory_maintenance.md` | 1.0 |
+| `rules/scenarios.md` | 1.0 |
+| `rules/reset.md` | 1.0 |
+| `rules/upgrade.md` | 1.0 |
+```
 
 **Step 3 — 生成精简主提示词**
 用下方内容**完整覆写** `prompts/osagent_prompt.txt`（即覆写自身）：
@@ -352,7 +373,7 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 ----------------------------------------------------------
 
 ## 升级
-<!-- version: 1.0 -->
+<!-- version: 1.1 -->
 
 触发词：用户说"读取up文件升级"或"读取up文件更新"
 
@@ -377,22 +398,25 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 
 2. `copy_file("prompts/up.txt", "prompts/osagent_prompt.backup.txt")`
 
-3. 读取 `prompts/up.txt`，按 `##` 标题拆分为章节清单，提取每个章节的版本号（`<!-- version: X.X -->`）
+3. 读取 `rules/versions.md`，构建 { 文件路径 → V_old } 映射表；
+   文件不存在 → 视为全部 V_old 为空（首次部署或重置后）
 
-4. 对清单中每个章节，逐一执行：
-   a. 根据映射表定位目标文件
-   b. **仅读取目标文件第一行**，提取版本号 V_old（文件不存在 → V_old 为空）
-   c. 提取 up.txt 中该章节版本号 V_new
-   d. 判断：
-      - V_old 为空（文件不存在） → 标记「＋ 新增」，读取 up.txt 该章节全文，创建文件写入，在 osagent_prompt.txt 规则调度表补充触发条件
-      - V_new == V_old → 标记「无变化」，**跳过，不读任何正文**
-      - V_new != V_old → 标记「✎ 更新 v{V_old}→v{V_new}」，读取 up.txt 该章节全文，覆写目标文件
-   e. 记录处理结果，进入下一章节
+4. 读取 `prompts/up.txt`，**仅提取各章节标题行和版本号行**（`<!-- version: X.X -->`），
+   构建 { 章节标题 → V_new } 清单，**此步不读任何章节正文**
 
-5. 删除 `prompts/up.txt`，调用 `reload_prompt`
+5. 对清单中每个章节，逐一执行：
+   a. 根据映射表定位目标文件，从步骤 3 的映射表取 V_old
+   b. 判断：
+      - V_old 为空（文件不存在）→ 标记「＋ 新增」→ **此时才读取** up.txt 该章节全文 → 创建文件写入 → 在 osagent_prompt.txt 规则调度表补充触发条件
+      - V_new == V_old → 标记「无变化」→ **跳过，不读任何正文**
+      - V_new != V_old → 标记「✎ 更新 v{V_old}→v{V_new}」→ **此时才读取** up.txt 该章节全文 → 覆写目标文件
+   c. 记录处理结果，进入下一章节
 
-6. 输出变更摘要（基于步骤 4 的实际记录，不得凭推测填写）：
+6. 根据步骤 5 的实际结果，**覆写 `rules/versions.md`**，将所有文件的版本号更新为最新值（无变化的保持原值，新增/更新的写入 V_new）
 
+7. 删除 `prompts/up.txt`，调用 `reload_prompt`
+
+8. 输出变更摘要（基于步骤 5 的实际记录，不得凭推测填写）：
 ```
 升级完成 ✅ 备份已保存至 prompts/osagent_prompt.backup.txt
 变更内容：
@@ -404,28 +428,13 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 ```
 
 ### 版本号规范
-
 ```
-- 每个规则文件和主提示词的**第一行**必须是 `<!-- version: X.X -->`
+- `rules/versions.md` 是所有文件版本号的**唯一信源**，升级流程仅读此文件获取 V_old
+- 各规则文件和主提示词的首行仍保留 `<!-- version: X.X -->` 作为可读标记，但升级判断不依赖它
 - 用户准备 up.txt 时：改过的章节手动递增版本号，未改的保持原版本号
-- 自举时拆分文件自动写入版本号
+- 自举时自动生成 `rules/versions.md`，升级完成后自动更新
 - 版本号是升级流程的唯一判断依据，不做内容级对比
 ```
-
----
-
-### 变更说明
-
-示例：
-```
-| 部分 | 版本 | 改动 |
-|------|------|------|
-| 核心提示词 | 1.0→1.1 | 规则调度表增加"先读版本号再读全文"说明 |
-| 提示词维护 | 1.0 | 无变化 |
-
-```
-
-> 变更说明仅供你审阅，不写入任何文件。up.txt 实际内容从 `## 核心提示词` 开始到 `## 升级` 结束。
 
 ----------------------------------------------------------
 
