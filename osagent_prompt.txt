@@ -400,11 +400,13 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 
 ### 来源判断
 
-收到触发词后，**优先检查本地**：
+收到触发词后：
 
-- `prompts/up.txt` 存在 → **本地模式**：直接读取该文件内容作为升级源
-- `prompts/up.txt` 不存在 → **远程模式**：直接 fetch `https://raw.githubusercontent.com/baichal/miclaw/refs/heads/main` 的内容，**不保存到本地**，将返回内容作为升级源
-  - fetch 失败（网络不通 / 404 / 超时）→ 提示用户检查网络或手动放置 up.txt 后重试，停止执行
+- 优先尝试**远程模式**：直接 fetch `https://raw.githubusercontent.com/baichal/miclaw/main/osagent_prompt.txt` 的内容，**不保存到本地**，将返回内容作为升级源
+  - fetch 成功 → 使用远程内容，忽略本地 up.txt
+  - fetch 失败（网络不通 / 404 / 超时）→ 降级检查本地
+- 远程失败后检查**本地模式**：`prompts/up.txt` 存在 → 读取该文件内容作为升级源
+  - 本地也不存在 → 提示用户检查网络或手动放置 up.txt 后重试，停止执行
 
 ### 执行流程
 
@@ -413,10 +415,11 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 2. 读取 `rules/versions.md`，构建 { 文件路径 → V_old } 映射表；
    文件不存在 → 视为全部 V_old 为空（首次部署或重置后）
 
-3. 从 `[UP]` 中**仅提取各章节标题行和版本号行**（`<!-- version: X.X -->`），
-   构建 { 章节标题 → V_new } 清单，**此步不读任何章节正文**。
-   ⚠️ V_new 必须原样照抄 `[UP]` 中 `<!-- version: X.X -->` 的数值，
-   **禁止自行推算、递增或猜测版本号**，写什么就是什么。
+3. 逐行扫描 `[UP]`，**只处理以下两种行，其余行一律跳过不读**：
+   - 章节标题行：以 `## ` 开头的行 → 记录为当前章节名
+   - 版本号行：格式为 `<!-- version: X.X -->` 的行 → 记录为当前章节的 V_new
+   构建 { 章节标题 → V_new } 清单后立即停止扫描，**不读任何正文内容**。
+   ⚠️ V_new 必须原样照抄版本号行中的数值，**禁止自行推算、递增或猜测**。
 
 4. 对清单中每个章节，逐一执行：
    a. 根据映射表定位目标文件，从步骤 2 的映射表取 V_old
