@@ -402,7 +402,7 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 
 收到触发词后：
 
-- 优先尝试**远程模式**：直接 fetch `https://raw.githubusercontent.com/baichal/miclaw/main/osagent_prompt.txt` 的内容，**不保存到本地**，将返回内容作为升级源
+- 优先尝试**远程模式**：直接 fetch `https://github.com/baichal/miclaw/raw/refs/heads/main/osagent_prompt.txt` 的内容，**不保存到本地**，将返回内容作为升级源
   - fetch 成功 → 使用远程内容，忽略本地 up.txt
   - fetch 失败（网络不通 / 404 / 超时）→ 降级检查本地
 - 远程失败后检查**本地模式**：`prompts/up.txt` 存在 → 读取该文件内容作为升级源
@@ -436,7 +436,7 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 7. 输出变更摘要（基于步骤 4 的实际记录，不得凭推测填写）：
 ```
 升级完成 ✅
-来源：{本地 prompts/up.txt | 远程 github.com/baichal/miclaw/osagent_prompt.txt}
+来源：{本地 prompts/up.txt | 远程 github.com/baichal/miclaw/raw/refs/heads/main/osagent_prompt.txt}
 变更内容：
   ＋ 新增  {文件名}
   ✎ 更新  {文件名} — v{旧}→v{新}
