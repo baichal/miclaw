@@ -381,7 +381,7 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 ## 升级
 <!-- version: 1.4 -->
 
-触发词：用户说"提示词升级"、"提示词检查更新"、"读取up文件升级"或"读取up文件更新"
+触发词：用户说"升级提示词"、"检查更新提示词"、"读取up文件升级"或"读取up文件更新"
 
 ### 章节与文件映射
 
@@ -401,7 +401,8 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 ### 执行流程
 
 1. **下载远程提示词文件**
-   调用：download_file("https://raw.githubusercontent.com/baichal/miclaw/main/osagent_prompt.txt", "prompts/up.txt")
+   调用：call_tool(action="call", tool_name="download_file", tool_arguments={"url": "https://raw.githubusercontent.com/baichal/miclaw/main/osagent_prompt.txt", "save_path": "prompts/up.txt"})
+   **禁止**用 fetch/read 读取内容再写入文件，必须使用上方工具直接落盘。
    - 下载失败（网络不通 / 404 / 超时）→ 提示用户检查网络后重试，停止执行
    - 下载成功 → 继续
 
