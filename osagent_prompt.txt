@@ -403,7 +403,7 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 收到触发词后，**优先检查本地**：
 
 - `prompts/up.txt` 存在 → **本地模式**：直接读取该文件内容作为升级源
-- `prompts/up.txt` 不存在 → **远程模式**：直接 fetch `https://raw.githubusercontent.com/baichal/miclaw/main/osagent_prompt.txt` 的内容，**不保存到本地**，将返回内容作为升级源
+- `prompts/up.txt` 不存在 → **远程模式**：直接 fetch `https://raw.githubusercontent.com/baichal/miclaw/refs/heads/main` 的内容，**不保存到本地**，将返回内容作为升级源
   - fetch 失败（网络不通 / 404 / 超时）→ 提示用户检查网络或手动放置 up.txt 后重试，停止执行
 
 ### 执行流程
