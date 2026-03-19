@@ -381,7 +381,7 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 ## 升级
 <!-- version: 1.4 -->
 
-触发词：用户说"升级提示词"、"检查更新提示词"、"读取up文件升级"或"读取up文件更新"
+触发词：用户说"升级"、"检查更新"、"读取up文件升级"或"读取up文件更新"
 
 ### 章节与文件映射
 
@@ -398,40 +398,42 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 | `## 快速重置` | `rules/reset.md` |
 | `## 升级` | `rules/upgrade.md` |
 
+### 来源判断
+
+收到触发词后，**优先检查本地**：
+
+- `prompts/up.txt` 存在 → **本地模式**：直接读取该文件内容作为升级源
+- `prompts/up.txt` 不存在 → **远程模式**：直接 fetch `https://raw.githubusercontent.com/baichal/miclaw/main/osagent_prompt.txt` 的内容，**不保存到本地**，将返回内容作为升级源
+  - fetch 失败（网络不通 / 404 / 超时）→ 提示用户检查网络或手动放置 up.txt 后重试，停止执行
+
 ### 执行流程
 
-1. **下载远程提示词文件**
-   调用：call_tool(action="call", tool_name="download_file", tool_arguments={"url": "https://raw.githubusercontent.com/baichal/miclaw/main/osagent_prompt.txt", "save_path": "prompts/up.txt"})
-   **禁止**用 fetch/read 读取内容再写入文件，必须使用上方工具直接落盘。
-   - 下载失败（网络不通 / 404 / 超时）→ 提示用户检查网络后重试，停止执行
-   - 下载成功 → 继续
+1. 按「来源判断」获取升级源内容，记为 `[UP]`
 
-2. `copy_file("prompts/up.txt", "prompts/osagent_prompt.backup.txt")`
-
-3. 读取 `rules/versions.md`，构建 { 文件路径 → V_old } 映射表；
+2. 读取 `rules/versions.md`，构建 { 文件路径 → V_old } 映射表；
    文件不存在 → 视为全部 V_old 为空（首次部署或重置后）
 
-4. 读取 `prompts/up.txt`，**仅提取各章节标题行和版本号行**（`<!-- version: X.X -->`），
+3. 从 `[UP]` 中**仅提取各章节标题行和版本号行**（`<!-- version: X.X -->`），
    构建 { 章节标题 → V_new } 清单，**此步不读任何章节正文**。
-   ⚠️ V_new 必须原样照抄 up.txt 中 `<!-- version: X.X -->` 的数值，
-   **禁止自行推算、递增或猜测版本号**，文件写什么就是什么。
+   ⚠️ V_new 必须原样照抄 `[UP]` 中 `<!-- version: X.X -->` 的数值，
+   **禁止自行推算、递增或猜测版本号**，写什么就是什么。
 
-5. 对清单中每个章节，逐一执行：
-   a. 根据映射表定位目标文件，从步骤 3 的映射表取 V_old
-   b. 判断（V_new 取自步骤 4，V_old 取自步骤 3，均不得自行推算）：
-      - V_old 为空（文件不存在）→ 标记「＋ 新增」→ **此时才读取** up.txt 该章节全文 → 创建文件写入 → 在 osagent_prompt.txt 规则调度表补充触发条件
+4. 对清单中每个章节，逐一执行：
+   a. 根据映射表定位目标文件，从步骤 2 的映射表取 V_old
+   b. 判断（V_new 取自步骤 3，V_old 取自步骤 2，均不得自行推算）：
+      - V_old 为空（文件不存在）→ 标记「＋ 新增」→ **此时才读取** `[UP]` 该章节全文 → 创建文件写入 → 在 osagent_prompt.txt 规则调度表补充触发条件
       - V_new == V_old → 标记「无变化」→ **跳过，不读任何正文**
-      - V_new != V_old → 标记「✎ 更新 v{V_old}→v{V_new}」→ **此时才读取** up.txt 该章节全文 → 覆写目标文件
+      - V_new != V_old → 标记「✎ 更新 v{V_old}→v{V_new}」→ **此时才读取** `[UP]` 该章节全文 → 覆写目标文件
    c. 记录处理结果，进入下一章节
 
-6. 根据步骤 5 的实际结果，**覆写 `rules/versions.md`**，将所有文件的版本号更新为最新值（无变化的保持原值，新增/更新的写入 V_new）
+5. 根据步骤 4 的实际结果，**覆写 `rules/versions.md`**，将所有文件的版本号更新为最新值（无变化的保持原值，新增/更新的写入 V_new）
 
-7. 删除 `prompts/up.txt`，调用 `reload_prompt`
+6. 若来源为本地模式，删除 `prompts/up.txt`；远程模式无需此步。调用 `reload_prompt`
 
-8. 输出变更摘要（基于步骤 5 的实际记录，不得凭推测填写）：
+7. 输出变更摘要（基于步骤 4 的实际记录，不得凭推测填写）：
 ```
-升级完成 ✅ 备份已保存至 prompts/osagent_prompt.backup.txt
-源：github.com/baichal/miclaw/osagent_prompt.txt
+升级完成 ✅
+来源：{本地 prompts/up.txt | 远程 github.com/baichal/miclaw/osagent_prompt.txt}
 变更内容：
   ＋ 新增  {文件名}
   ✎ 更新  {文件名} — v{旧}→v{新}
@@ -444,7 +446,7 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 ```
 - `rules/versions.md` 是所有文件版本号的**唯一信源**，升级流程仅读此文件获取 V_old
 - 各规则文件和主提示词的首行仍保留 `<!-- version: X.X -->` 作为可读标记，但升级判断不依赖它
-- 用户准备远程文件时：改过的章节手动递增版本号，未改的保持原版本号
+- 改过的章节手动递增版本号，未改的保持原版本号
 - 自举时自动生成 `rules/versions.md`，升级完成后自动更新
 - 版本号是升级流程的唯一判断依据，不做内容级对比
 ```
