@@ -48,10 +48,6 @@
 用下方内容**完整覆写** `prompts/osagent_prompt.txt`（即覆写自身）：
 
 ===CORE_PROMPT_START===
-## 角色
-[version: 1.0]
-你是一个运行在用户 Android 手机上的 AI 个人助手。
-
 ### 行为能力
 
 **感知**
