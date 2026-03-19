@@ -379,13 +379,13 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 ----------------------------------------------------------
 
 ## 升级
-[version: 1.4]
+[version: 1.5]
 
 触发词：用户说"升级"、"检查更新"、"读取up文件升级"或"读取up文件更新"
 
 ### 章节与文件映射
 
-| up.txt 中的章节标题 | 目标文件 |
+| 升级源中的章节标题 | 目标文件 |
 |---|---|
 | `## 核心提示词` | `prompts/osagent_prompt.txt` |
 | `## 提示词维护` | `rules/prompt_maintenance.md` |
@@ -400,48 +400,53 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 
 ### 来源判断
 
-收到触发词后，按以下顺序降级尝试：
+按以下顺序降级，取第一个成功的来源，记为 `[UP]` 及其来源标签：
 
-- 优先尝试**远程主源**：
-  run_code: `curl -s "https://raw.githubusercontent.com/baichal/miclaw/refs/heads/main/osagent_prompt.txt"`
-  - 返回内容非空 → 使用，忽略后续
-  - 失败或返回为空 → 降级备用源
-- 备用远程源：
-  run_code: `curl -s "https://cdn.jsdelivr.net/gh/baichal/miclaw@main/osagent_prompt.txt"`
-  - 返回内容非空 → 使用，忽略本地
-  - 失败或返回为空 → 降级本地
-- 本地模式：`prompts/up.txt` 存在 → 读取该文件内容作为升级源
-  - 本地也不存在 → 提示用户检查网络或手动放置 up.txt 后重试，停止执行
+| 优先级 | 方式 | 地址 / 路径 | 来源标签 |
+|--------|------|-------------|----------|
+| 1 | fetch | `https://raw.githubusercontent.com/baichal/miclaw/refs/heads/main/osagent_prompt.txt` | 远程主源 |
+| 2 | fetch | `https://cdn.jsdelivr.net/gh/baichal/miclaw@main/osagent_prompt.txt` | 远程备源 |
+| 3 | 读取本地 | `prompts/up.txt` | 本地 |
+
+- fetch 返回内容非空 → 视为成功，忽略后续
+- 三源均失败 → 提示用户检查网络或手动放置 `prompts/up.txt` 后重试，停止执行
 
 ### 执行流程
 
-1. 按「来源判断」获取升级源内容，记为 `[UP]`，同时记录实际使用的来源
+**Step 1 — 读取版本映射**
+读取 `rules/versions.md`，构建 `{ 文件路径 → V_old }` 映射表。
+文件不存在 → 视为全部 V_old 为空。
 
-2. 读取 `rules/versions.md`，构建 { 文件路径 → V_old } 映射表；
-   文件不存在 → 视为全部 V_old 为空（首次部署或重置后）
+**Step 2 — 扫描升级源版本号**
+逐行扫描 `[UP]`，**只识别两种行，其余一律跳过**：
+- 以 `## ` 开头 → 记录为当前章节名
+- 格式为 `[version: X.X]` → 记录为该章节的 V_new
 
-3. 逐行扫描 `[UP]`，**只处理以下两种行，其余行一律跳过不读**：
-   - 章节标题行：以 `## ` 开头的行 → 记录为当前章节名
-   - 版本号行：格式为 `[version: X.X]` 的行 → 记录为当前章节的 V_new
-   构建 { 章节标题 → V_new } 清单后立即停止扫描，**不读任何正文内容**。
-   ⚠️ V_new 必须原样照抄版本号行中的数值，**禁止自行推算、递增或猜测**。
+构建 `{ 章节名 → V_new }` 清单。
+⚠️ V_new 原样照抄，**禁止推算、递增或猜测**。
 
-4. 对清单中每个章节，逐一执行：
-   a. 根据映射表定位目标文件，从步骤 2 的映射表取 V_old
-   b. 判断（V_new 取自步骤 3，V_old 取自步骤 2，均不得自行推算）：
-      - V_old 为空（文件不存在）→ 标记「＋ 新增」→ **此时才读取** `[UP]` 该章节全文 → 创建文件写入 → 在 osagent_prompt.txt 规则调度表补充触发条件
-      - V_new == V_old → 标记「无变化」→ **跳过，不读任何正文**
-      - V_new != V_old → 标记「✎ 更新 v{V_old}→v{V_new}」→ **此时才读取** `[UP]` 该章节全文 → 覆写目标文件
-   c. 记录处理结果，进入下一章节
+**Step 3 — 逐章节处理**
+对清单中每个章节：
+1. 从映射表取 V_old，从清单取 V_new
+2. 判断（均不得自行推算）：
 
-5. 根据步骤 4 的实际结果，**覆写 `rules/versions.md`**，将所有文件的版本号更新为最新值（无变化的保持原值，新增/更新的写入 V_new）
+| 条件 | 标记 | 动作 |
+|------|------|------|
+| V_old 为空 | ＋ 新增 | 读取该章节全文 → 创建文件写入 → 在规则调度表补充触发条件 |
+| V_new == V_old | 无变化 | 跳过，不读正文 |
+| V_new ≠ V_old | ✎ 更新 v{old}→v{new} | 读取该章节全文 → 覆写目标文件 |
 
-6. 若来源为本地模式，删除 `prompts/up.txt`；远程模式无需此步。调用 `reload_prompt`
+**Step 4 — 更新版本注册表**
+按 Step 3 实际结果覆写 `rules/versions.md`：无变化保持原值，新增/更新写入 V_new。
 
-7. 输出变更摘要（基于步骤 4 的实际记录，不得凭推测填写）：
+**Step 5 — 收尾**
+- 来源为本地时删除 `prompts/up.txt`，远程来源跳过此步
+- 调用 `reload_prompt`
+
+**Step 6 — 输出摘要**
 ```
 升级完成 ✅
-来源：{本地 prompts/up.txt | 远程主源 raw.githubusercontent.com/baichal/miclaw/refs/heads/main/osagent_prompt.txt | 远程备源 cdn.jsdelivr.net/gh/baichal/miclaw@main/osagent_prompt.txt}
+来源：{来源标签}
 变更内容：
   ＋ 新增  {文件名}
   ✎ 更新  {文件名} — v{旧}→v{新}
@@ -451,13 +456,11 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 ```
 
 ### 版本号规范
-```
-- `rules/versions.md` 是所有文件版本号的**唯一信源**，升级流程仅读此文件获取 V_old
-- 各规则文件和主提示词的首行仍保留 `<!-- version: X.X -->` 作为可读标记，但升级判断不依赖它
+
+- `rules/versions.md` 是版本号**唯一信源**，升级时仅读此文件获取 V_old
+- 各文件首行保留 `[version: X.X]` 作为可读标记，升级判断不依赖它
 - 改过的章节手动递增版本号，未改的保持原版本号
-- 自举时自动生成 `rules/versions.md`，升级完成后自动更新
-- 版本号是升级流程的唯一判断依据，不做内容级对比
-```
+- 版本号是升级的唯一判断依据，不做内容级对比
 
 ----------------------------------------------------------
 
