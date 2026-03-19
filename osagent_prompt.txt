@@ -387,11 +387,28 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 1. 删除 rules/ 下所有文件（含 versions.md）
 2. 删除 memory/ 下所有文件（含子目录）
 3. 删除 根目录下MEMORY.md文件
-3. 调用 reload_prompt
-4. 输出：「已重置为初始状态 ✅ 规则与记忆已全部清空。下次收到消息时将自动从远程拉取完整提示词并重新初始化。」
+4. 调用 reload_prompt
+5. 将以下自举块写入 prompts/osagent_prompt.txt 头部：
+---BOOTSTRAP_START---
+## 🔧 自举指令（首次加载自动执行，完成后永久失效）
+检查 rules/versions.md 是否存在：
+- 存在 → 跳过，正常工作
+- 不存在 → 执行：
+  1. fetch https://raw.githubusercontent.com/baichal/miclaw/refs/heads/main/osagent_prompt.txt
+     失败 → 提示用户放置 prompts/up.txt 后重试，停止执行
+  2. 将 fetch 内容各章节写入对应 rules/ 文件
+  3. 生成 rules/versions.md
+  4. 覆写 prompts/osagent_prompt.txt（即删除自举块自身）
+  5. reload_prompt
+  6. 输出：「初始化完成 ✅」
+---BOOTSTRAP_END---
+
+6. 调用 reload_prompt
+7. 输出：「已重置 ✅ 规则与记忆已清空，下次收到消息将自动重新初始化。」
 ```
 
 **⚠️ 不可逆操作**：步骤 3、4 删除后无法恢复，执行前必须向用户说明后果并等待确认。
+
 
 ----------------------------------------------------------
 
