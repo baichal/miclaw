@@ -179,9 +179,8 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 ----------------------------------------------------------
 
 ## 提示词维护
-[version: 1.0]
+[version: 1.1]
 - 📍 主文件：`prompts/osagent_prompt.txt`
-- 🗂️ 修改前：AI 自动备份到 `prompts/osagent_prompt.backup.txt`（覆盖旧备份，无需用户操作）
 - ✏️ 修改规则文件：直接写入 `rules/` 对应文件
 - 🔄 任何修改完成后：AI 自动调用 `reload_prompt`，无需用户提醒
 - ❌ 禁止：要求用户手动编辑、复制、粘贴任何提示词内容
