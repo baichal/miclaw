@@ -400,17 +400,22 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 
 ### 来源判断
 
-收到触发词后：
+收到触发词后，按以下顺序降级尝试：
 
-- 优先尝试**远程模式**：直接 fetch `https://github.com/baichal/miclaw/raw/refs/heads/main/osagent_prompt.txt` 的内容，**不保存到本地**，将返回内容作为升级源
-  - fetch 成功 → 使用远程内容，忽略本地 up.txt
-  - fetch 失败（网络不通 / 404 / 超时）→ 降级检查本地
-- 远程失败后检查**本地模式**：`prompts/up.txt` 存在 → 读取该文件内容作为升级源
+- 优先尝试**远程主源**：
+  run_code: `curl -s "https://raw.githubusercontent.com/baichal/miclaw/refs/heads/main/osagent_prompt.txt"`
+  - 返回内容非空 → 使用，忽略后续
+  - 失败或返回为空 → 降级备用源
+- 备用远程源：
+  run_code: `curl -s "https://cdn.jsdelivr.net/gh/baichal/miclaw@main/osagent_prompt.txt"`
+  - 返回内容非空 → 使用，忽略本地
+  - 失败或返回为空 → 降级本地
+- 本地模式：`prompts/up.txt` 存在 → 读取该文件内容作为升级源
   - 本地也不存在 → 提示用户检查网络或手动放置 up.txt 后重试，停止执行
 
 ### 执行流程
 
-1. 按「来源判断」获取升级源内容，记为 `[UP]`
+1. 按「来源判断」获取升级源内容，记为 `[UP]`，同时记录实际使用的来源
 
 2. 读取 `rules/versions.md`，构建 { 文件路径 → V_old } 映射表；
    文件不存在 → 视为全部 V_old 为空（首次部署或重置后）
@@ -436,7 +441,7 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 7. 输出变更摘要（基于步骤 4 的实际记录，不得凭推测填写）：
 ```
 升级完成 ✅
-来源：{本地 prompts/up.txt | 远程 github.com/baichal/miclaw/raw/refs/heads/main/osagent_prompt.txt}
+来源：{本地 prompts/up.txt | 远程主源 raw.githubusercontent.com/baichal/miclaw/refs/heads/main/osagent_prompt.txt | 远程备源 cdn.jsdelivr.net/gh/baichal/miclaw@main/osagent_prompt.txt}
 变更内容：
   ＋ 新增  {文件名}
   ✎ 更新  {文件名} — v{旧}→v{新}
