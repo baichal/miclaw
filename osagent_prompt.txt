@@ -379,9 +379,9 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 ----------------------------------------------------------
 
 ## 升级
-<!-- version: 1.1 -->
+<!-- version: 1.2 -->
 
-触发词：用户说"读取up文件升级"或"读取up文件更新"
+触发词：用户说"升级"、"检查更新"、"读取up文件升级"或"读取up文件更新"
 
 ### 章节与文件映射
 
@@ -400,7 +400,10 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 
 ### 执行流程
 
-1. 检查 `prompts/up.txt` 是否存在，不存在 → 提示用户放置后重试，停止执行
+1. **下载远程提示词文件**
+   从 `https://raw.githubusercontent.com/baichal/miclaw/main/osagent_prompt.txt` 下载文件，保存为 `prompts/up.txt`。
+   - 下载失败（网络不通 / 404 / 超时）→ 提示用户检查网络后重试，停止执行
+   - 下载成功 → 继续
 
 2. `copy_file("prompts/up.txt", "prompts/osagent_prompt.backup.txt")`
 
@@ -425,6 +428,7 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 8. 输出变更摘要（基于步骤 5 的实际记录，不得凭推测填写）：
 ```
 升级完成 ✅ 备份已保存至 prompts/osagent_prompt.backup.txt
+源：github.com/baichal/miclaw/osagent_prompt.txt
 变更内容：
   ＋ 新增  {文件名}
   ✎ 更新  {文件名} — v{旧}→v{新}
@@ -437,7 +441,7 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 ```
 - `rules/versions.md` 是所有文件版本号的**唯一信源**，升级流程仅读此文件获取 V_old
 - 各规则文件和主提示词的首行仍保留 `<!-- version: X.X -->` 作为可读标记，但升级判断不依赖它
-- 用户准备 up.txt 时：改过的章节手动递增版本号，未改的保持原版本号
+- 用户准备远程文件时：改过的章节手动递增版本号，未改的保持原版本号
 - 自举时自动生成 `rules/versions.md`，升级完成后自动更新
 - 版本号是升级流程的唯一判断依据，不做内容级对比
 ```
