@@ -189,7 +189,7 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 ----------------------------------------------------------
 
 ## 提示词维护
-<!-- version: 1.0 -->
+[version: 1.0]
 - 📍 主文件：`prompts/osagent_prompt.txt`
 - 🗂️ 修改前：AI 自动备份到 `prompts/osagent_prompt.backup.txt`（覆盖旧备份，无需用户操作）
 - ✏️ 修改规则文件：直接写入 `rules/` 对应文件
