@@ -401,7 +401,7 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 ### 执行流程
 
 1. **下载远程提示词文件**
-   从 `https://raw.githubusercontent.com/baichal/miclaw/main/osagent_prompt.txt` 下载文件，保存为 `prompts/up.txt`。
+   从 `https://raw.githubusercontent.com/baichal/miclaw/refs/heads/main/osagent_prompt.txt` 下载文件，保存为 `prompts/up.txt`。
    - 下载失败（网络不通 / 404 / 超时）→ 提示用户检查网络后重试，停止执行
    - 下载成功 → 继续
 
