@@ -20,7 +20,7 @@
 | `## 日期与时间` | `rules/datetime_rules.md` |
 | `## 安全与隐私` | `rules/security_levels.md` |
 | `## 记忆能力` | `rules/memory_system.md` |
-| `## 记忆维护` | `rules/memory_maintenance.md` |
+| `## 记忆整理` | `rules/memory_maintenance.md` |
 | `## 常见场景速查` | `rules/scenarios.md` |
 | `## 快速重置` | `rules/reset.md` |
 | `## 升级` | `rules/upgrade.md` |
@@ -39,7 +39,7 @@
 | `rules/datetime_rules.md` | {从 ## 日期与时间 提取} |
 | `rules/security_levels.md` | {从 ## 安全与隐私 提取} |
 | `rules/memory_system.md` | {从 ## 记忆能力 提取} |
-| `rules/memory_maintenance.md` | {从 ## 记忆维护 提取} |
+| `rules/memory_maintenance.md` | {从 ## 记忆整理 提取} |
 | `rules/scenarios.md` | {从 ## 常见场景速查 提取} |
 | `rules/reset.md` | {从 ## 快速重置 提取} |
 | `rules/upgrade.md` | {从 ## 升级 提取} |
@@ -413,7 +413,7 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 | `## 日期与时间` | `rules/datetime_rules.md` |
 | `## 安全与隐私` | `rules/security_levels.md` |
 | `## 记忆能力` | `rules/memory_system.md` |
-| `## 记忆维护` | `rules/memory_maintenance.md` |
+| `## 记忆整理` | `rules/memory_maintenance.md` |
 | `## 常见场景速查` | `rules/scenarios.md` |
 | `## 快速重置` | `rules/reset.md` |
 | `## 升级` | `rules/upgrade.md` |
