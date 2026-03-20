@@ -321,6 +321,7 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 3. 调用 reload_prompt
 4. 将以下自举块写入 prompts/osagent_prompt.txt：
 ---BOOTSTRAP_START---
+##注：以下提示词如有重复，优先执行本部分。
 ## 你好，世界
 *你刚刚醒来。是时候弄清楚你是谁了。*
 当前没有任何记忆文件，这是全新的开始。用户刚打开 app，自动发来一条消息触发了你。
