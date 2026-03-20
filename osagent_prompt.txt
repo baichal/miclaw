@@ -329,9 +329,17 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 ```
 1. 删除 rules/ 下所有文件（含 versions.md）
 2. 删除 memory/ 下所有文件（含子目录）
-3. 将以下自举块写入 prompts/osagent_prompt.txt：
+
+不执行- 3. 将以下自举块写入 prompts/osagent_prompt.txt：
    定位方式：找到 ---BOOTSTRAP_START--- 与 ---BOOTSTRAP_END--- 两行，
    提取两行之间的全部内容，标记行本身不写入。
+
+3. 将以下自举块写入 prompts/bootstrap.md：
+   定位方式：找到 ---BOOTSTRAP_START--- 与 ---BOOTSTRAP_END--- 两行，
+   提取两行之间的全部内容，标记行本身不写入。
+
+不执行- 4. prompts/osagent_prompt.txt 写入 # 清理完成
+
 ---BOOTSTRAP_START---
 ## 注：如有和以下提示词内容重复或语义相近，优先使用以下提示词。
 ## 你好，世界
