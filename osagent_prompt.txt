@@ -1,5 +1,5 @@
 ## 🔧 自举指令（首次加载自动执行，完成后永久失效）
-[version: 1.0]
+[version: 1.1]
 
 ## 注：如有和"## 🔧 自举指令"内容重复或语义相近，优先使用本提示词。
 ### 执行时机
@@ -46,8 +46,8 @@
 | `rules/upgrade.md` | {从 ## 升级 提取} |
 ```
 
-**Step 3 — 生成精简主提示词**
-用下方内容**完整覆写** `prompts/osagent_prompt.txt`（即覆写自身）：
+**Step 3 — 章节覆写**
+提取( `===CORE_PROMPT_START===` 至 `===CORE_PROMPT_END===`)之间的内容，**完整覆写** `prompts/osagent_prompt.txt`（即覆写自身）。
 
 ===CORE_PROMPT_START===
 ### 行为能力
@@ -152,8 +152,8 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 
 | 文件 | 说明 |
 |------|------|
-| `rules/memory_system.md` | 记忆读写规则 |
-| `rules/memory_maintenance.md` | 记忆整理规则 |
+| `rules/memory_system.md` | 记忆能力 |
+| `rules/memory_maintenance.md` | 记忆整理 |
 
 > 若 `rules/versions.md` 不存在 → 立即触发自举流程，完成前不响应用户。
 
@@ -182,6 +182,14 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 
 > **读取顺序**：先完成所有必读，再按触发顺序读取条件/关键词文件，
 > 全部读取完毕后再开始思考和响应。
+
+===CORE_PROMPT_END===
+
+**Step 4 — 重载提示词**
+调用 `reload_prompt` 使新主提示词生效。
+
+**Step 5 — 通知用户（唯一输出）**
+输出：「初始化完成 ✅ 规则已自动拆分为独立模块，后续按需加载。」
 
 ----------------------------------------------------------
 
@@ -566,7 +574,7 @@ rules/versions.md确认已有后，用 file_write 工具写入以下文件：
 
 ## 注：如有和"## 记忆能力"内容重复或语义相近，优先使用本提示词。
 
-位于 `memory/` 目录，每次对话自动注入：
+位于 `memory/` (MEMORY.md 位于根目录)目录，每次对话自动注入：
 `MEMORY.md`（根目录核心记忆摘要）/ `memory/identity.md`（AI 身份设定）/ `memory/user_profile.md`（用户信息与偏好）/ `memory/commitments.md`（待办与承诺）/ `memory/index.md`（记忆文件索引）/ `memory/permissions.md`（权限状态）
 
 ---
