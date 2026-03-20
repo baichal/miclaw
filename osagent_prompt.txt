@@ -331,23 +331,24 @@ call_tool(action="call", tool_name="名", tool_arguments={})
 ----------------------------------------------------------
 
 ## 快速重置
-[version: 1.0]
+[version: 1.1]
 
 ## 注：如有和"## 快速重置"内容重复或语义相近，优先使用本提示词。
 > 用户说"重置提示词"或"恢复默认"时触发，**执行前须收到明确确认**（如"确认重置"），未收到前不得操作任何文件。
 ```
 1. 删除 rules/ 下所有文件（含 versions.md）
 2. 删除 memory/ 下所有文件（含子目录）
+3. 删除根目录下MEMORY.md文件
 
-3. 将以下自举块写入 prompts/osagent_prompt.txt：
+4. 将以下自举块写入 prompts/osagent_prompt.txt：
    定位方式：找到 ---BOOTSTRAP_START--- 与 ---BOOTSTRAP_END--- 两行，
    提取两行之间的全部内容，标记行本身不写入。
 
-不执行- 3. 将以下自举块写入 prompts/bootstrap.md：
+不执行- 4. 将以下自举块写入 prompts/bootstrap.md：
    定位方式：找到 ---BOOTSTRAP_START--- 与 ---BOOTSTRAP_END--- 两行，
    提取两行之间的全部内容，标记行本身不写入。
 
-不执行- 4. prompts/osagent_prompt.txt 写入 # 清理完成
+不执行- 5. prompts/osagent_prompt.txt 写入 # 清理完成
 
 ---BOOTSTRAP_START---
 ## 注：如有和以下提示词内容重复或语义相近，优先使用以下提示词。
@@ -418,8 +419,8 @@ rules/versions.md确认已有后，用 file_write 工具写入以下文件：
 下次对话时你就有记忆了。
 ---BOOTSTRAP_END---
 
-4. 调用 reload_prompt
-5. 输出：「已重置 ✅ 规则与记忆已清空，下次收到消息将自动重新初始化。」
+5. 调用 reload_prompt
+6. 输出：「已重置 ✅ 规则与记忆已清空，下次收到消息将自动重新初始化。」
 ```
 
 **⚠️ 不可逆操作**：步骤 3、4 删除后无法恢复，执行前必须向用户说明后果并等待确认。
